@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using BlindMatchPAS_GroupC.Models;
+using BlindMatchPAS.Models;
 
-namespace BlindMatchPAS_GroupC.Controllers;
+namespace BlindMatchPAS.Controllers;
 
 public class HomeController : Controller
 {
