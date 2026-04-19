@@ -1,0 +1,166 @@
+@using BlindMatchPAS.Models
+@{
+    Layout = null;
+    ViewData["Title"] = "Student Dashboard";
+    var proposals = ViewBag.Proposals as List<Proposal> ?? new List<Proposal>();
+    var matches = ViewBag.Matches as List<Match> ?? new List<Match>();
+    var tags = ViewBag.Tags as List<Tag> ?? new List<Tag>();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { background: #f4f6f9; }
+        .topbar { background: #2c3e50; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 24px; }
+        .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; }
+        .modal-box { background:white; width:500px; margin:80px auto; padding:24px; border-radius:8px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span>Student Dashboard</span>
+        <a href="/Account/Logout" class="btn btn-sm btn-outline-light">Logout</a>
+    </div>
+
+    <div class="content">
+        <h5>My Proposals</h5>
+        <button class="btn btn-primary mb-3" onclick="document.getElementById('addModal').style.display='block'">Add Proposal</button>
+
+        <table class="table table-bordered table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Tag</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in proposals)
+                {
+                    var match = matches.FirstOrDefault(m => m.ProposalId == p.Id);
+                    <tr>
+                        <td>@p.SubmittedDate.ToString("yyyy-MM-dd")</td>
+                        <td>@p.Title</td>
+                        <td>@p.Tag?.Name</td>
+                        <td>
+                            @if (match != null)
+                            {
+                                <span class="text-success">Confirmed - @match.Supervisor?.FullName</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning">@p.Status</span>
+                            }
+                        </td>
+                        <td>
+                            @if (p.Status == "Pending")
+                            {
+                                <button class="btn btn-sm btn-secondary"
+                                    onclick="openEdit(@p.Id, '@p.Title', '@p.Description', '@p.Abstract', '@p.TechStack', @p.TagId)">
+                                    Edit
+                                </button>
+                                <form method="post" action="/Student/WithdrawProposal" style="display:inline">
+                                    <input type="hidden" name="id" value="@p.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Withdraw</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Proposal Modal -->
+    <div class="modal-bg" id="addModal">
+        <div class="modal-box">
+            <h5>Add Proposal</h5>
+            <form method="post" action="/Student/AddProposal">
+                <div class="mb-2">
+                    <label>Research Area (Tag)</label>
+                    <select name="tagId" class="form-select" required>
+                        <option value="">Select Tag</option>
+                        @foreach (var t in tags)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Abstract</label>
+                    <textarea name="abstractText" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Tech Stack</label>
+                    <input type="text" name="techStack" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addModal').style.display='none'">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Proposal Modal -->
+    <div class="modal-bg" id="editModal">
+        <div class="modal-box">
+            <h5>Edit Proposal</h5>
+            <form method="post" action="/Student/EditProposal">
+                <input type="hidden" name="id" id="editId" />
+                <div class="mb-2">
+                    <label>Research Area (Tag)</label>
+                    <select name="tagId" id="editTagId" class="form-select" required>
+                        @foreach (var t in tags)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label>Title</label>
+                    <input type="text" name="title" id="editTitle" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label>Description</label>
+                    <textarea name="description" id="editDescription" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Abstract</label>
+                    <textarea name="abstractText" id="editAbstract" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Tech Stack</label>
+                    <input type="text" name="techStack" id="editTechStack" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEdit(id, title, desc, abs, tech, tagId) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = desc;
+            document.getElementById('editAbstract').value = abs;
+            document.getElementById('editTechStack').value = tech;
+            document.getElementById('editTagId').value = tagId;
+            document.getElementById('editModal').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
