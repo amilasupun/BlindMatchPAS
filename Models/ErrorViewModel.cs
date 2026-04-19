@@ -1,4 +1,4 @@
-namespace BlindMatchPAS_GroupC.Models;
+namespace BlindMatchPAS.Models;
 
 public class ErrorViewModel
 {
