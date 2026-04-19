@@ -1,0 +1,120 @@
+@using BlindMatchPAS.Models
+@{
+    Layout = null;
+    ViewData["Title"] = "Supervisor Dashboard";
+    var proposals = ViewBag.Proposals as List<Proposal> ?? new List<Proposal>();
+    var tags = ViewBag.Tags as List<Tag> ?? new List<Tag>();
+    var confirmed = ViewBag.ConfirmedMatches as List<Match> ?? new List<Match>();
+    var selectedTag = ViewBag.SelectedTag as int?;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Supervisor Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { background: #f4f6f9; }
+        .topbar { background: #2c3e50; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 24px; }
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
+        .proposal-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span>Supervisor Dashboard</span>
+        <a href="/Account/Logout" class="btn btn-sm btn-outline-light">Logout</a>
+    </div>
+
+    <div class="content">
+        <div class="mb-3">
+            <button class="btn btn-secondary" onclick="showTab('browser')">Proposal Browser</button>
+            <button class="btn btn-secondary" onclick="showTab('confirmed')">Confirmed Proposals</button>
+        </div>
+
+        <!-- Proposal Browser Tab -->
+        <div id="browser" class="tab-section active">
+            <h5>Browse Proposals</h5>
+            <form method="get" action="/Supervisor/Dashboard" class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <select name="tagId" class="form-select">
+                        <option value="">All Research Areas</option>
+                        @foreach (var t in tags)
+                        {
+                            if (selectedTag == t.Id)
+                            {
+                                <option value="@t.Id" selected>@t.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+
+            @if (!proposals.Any())
+            {
+                <p>No proposals available.</p>
+            }
+            @foreach (var p in proposals)
+            {
+                <div class="proposal-card">
+                    <h6>@p.Title</h6>
+                    <p><strong>Tag:</strong> @p.Tag?.Name</p>
+                    <p><strong>Abstract:</strong> @p.Abstract</p>
+                    <p><strong>Tech Stack:</strong> @p.TechStack</p>
+                    <p class="text-muted" style="font-size:12px">Student identity hidden until confirmed.</p>
+                    <form method="post" action="/Supervisor/ConfirmMatch">
+                        <input type="hidden" name="proposalId" value="@p.Id" />
+                        <button type="submit" class="btn btn-success btn-sm">Confirm Match</button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <!-- Confirmed Proposals Tab -->
+        <div id="confirmed" class="tab-section">
+            <h5>Confirmed Proposals</h5>
+            <table class="table table-bordered table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Proposal Title</th>
+                        <th>Tag</th>
+                        <th>Student Name</th>
+                        <th>Student Email</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in confirmed)
+                    {
+                        <tr>
+                            <td>@m.MatchedDate.ToString("yyyy-MM-dd")</td>
+                            <td>@m.Proposal?.Title</td>
+                            <td>@m.Proposal?.Tag?.Name</td>
+                            <td>@m.Proposal?.Student?.FullName</td>
+                            <td>@m.Proposal?.Student?.Email</td>
+                            <td>@m.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
