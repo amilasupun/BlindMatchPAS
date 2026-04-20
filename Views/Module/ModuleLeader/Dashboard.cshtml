@@ -1,0 +1,194 @@
+@using BlindMatchPAS.Models
+@{
+    Layout = null;
+    ViewData["Title"] = "Module Leader Dashboard";
+    var users = ViewBag.Users as List<ApplicationUser> ?? new List<ApplicationUser>();
+    var tags = ViewBag.Tags as List<Tag> ?? new List<Tag>();
+    var matches = ViewBag.Matches as List<Match> ?? new List<Match>();
+    var studentCount = (ViewBag.StudentCount as IList<ApplicationUser>)?.Count ?? 0;
+    var supervisorCount = (ViewBag.SupervisorCount as IList<ApplicationUser>)?.Count ?? 0;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Module Leader Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { background: #f4f6f9; }
+        .topbar { background: #2c3e50; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 24px; }
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
+        .tab-btn { margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span>Module Leader Dashboard</span>
+        <a href="/Account/Logout" class="btn btn-sm btn-outline-light">Logout</a>
+    </div>
+
+    <div class="content">
+        <div class="mb-3">
+            <button class="btn btn-secondary tab-btn" onclick="showTab('addUsers')">Add Users</button>
+            <button class="btn btn-secondary tab-btn" onclick="showTab('addTags')">Add Tags</button>
+            <button class="btn btn-secondary tab-btn" onclick="showTab('reports')">Reports</button>
+        </div>
+
+        <!-- Add Users Tab -->
+        <div id="addUsers" class="tab-section active">
+            <h5>Add User</h5>
+            <form method="post" action="/ModuleLeader/AddUser" class="row g-2 mb-4">
+                <div class="col-md-2">
+                    <select name="role" class="form-select" required>
+                        <option value="">Category</option>
+                        <option value="Student">Student</option>
+                        <option value="Supervisor">Supervisor</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="fullName" class="form-control" placeholder="Full Name" required />
+                </div>
+                <div class="col-md-3">
+                    <input type="email" name="email" class="form-control" placeholder="Email" required />
+                </div>
+                <div class="col-md-2">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Add</button>
+                </div>
+            </form>
+
+            <h5>Users List</h5>
+            <table class="table table-bordered table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in users)
+                    {
+                        <tr>
+                            <td>@u.FullName</td>
+                            <td>@u.Email</td>
+                            <td>@u.Role</td>
+                            <td>
+                                <form method="post" action="/ModuleLeader/RemoveUser">
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Tags Tab -->
+        <div id="addTags" class="tab-section">
+            <h5>Add Research Tag</h5>
+            <form method="post" action="/ModuleLeader/AddTag" class="row g-2 mb-4">
+                <div class="col-md-4">
+                    <input type="text" name="name" class="form-control" placeholder="Tag name (e.g. AI, Cybersecurity)" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary">Add Tag</button>
+                </div>
+            </form>
+            <table class="table table-bordered table-sm">
+                <thead class="table-dark">
+                    <tr><th>Tag Name</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in tags)
+                    {
+                        <tr>
+                            <td>@t.Name</td>
+                            <td>
+                                <form method="post" action="/ModuleLeader/RemoveTag">
+                                    <input type="hidden" name="id" value="@t.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        
+        <!-- Reports Tab -->
+<div id="reports" class="tab-section">
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h6>Total Students</h6>
+                <h3>@ViewBag.StudentCount</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h6>Total Supervisors</h6>
+                <h3>@ViewBag.SupervisorCount</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h6>Total Matches</h6>
+                <h3>@matches.Count</h3>
+            </div>
+        </div>
+    </div>
+
+            <h5>Matches List</h5>
+            <table class="table table-bordered table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Student</th>
+                        <th>Proposal</th>
+                        <th>Supervisor</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in matches)
+                    {
+                        <tr>
+                            <td>@m.Proposal?.Student?.FullName</td>
+                            <td>@m.Proposal?.Title</td>
+                            <td>@m.Supervisor?.FullName</td>
+                            <td>@m.Status</td>
+                            <td>
+                                <form method="post" action="/ModuleLeader/EditMatch" class="d-flex gap-1">
+                                    <input type="hidden" name="matchId" value="@m.Id" />
+                                    <select name="supervisorId" class="form-select form-select-sm">
+                                        @foreach (var u in users.Where(u => u.Role == "Supervisor"))
+                                        {
+                                            <option value="@u.Id">@u.FullName</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-warning btn-sm">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
